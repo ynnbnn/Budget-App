@@ -135,12 +135,13 @@ function TransportCalculator({ settings, dispatch }) {
 
 function TaxReserve({ state, dispatch }) {
   const taxCat = state.categories.find(c => c.id === 'taxes');
-  if (!taxCat) return null;
 
   const [editAmount, setEditAmount] = useState(false);
   const [amountVal, setAmountVal] = useState('');
   const [editNote, setEditNote] = useState(false);
-  const [noteVal, setNoteVal] = useState(taxCat.note || '');
+  const [noteVal, setNoteVal] = useState(taxCat?.note || '');
+
+  if (!taxCat) return null;
 
   const monthlyAmount = taxCat.amount;
   const yearlyAmount = monthlyAmount * 12;
