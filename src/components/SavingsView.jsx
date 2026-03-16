@@ -18,16 +18,29 @@ export default function SavingsView() {
         <h1 className="view-title">Sparen & Ziele</h1>
       </div>
 
-      {/* Savings accounts */}
+      {/* Savings accounts — two separate, clearly shown */}
       <div className="card">
         <div className="card-title">Meine Sparkonten</div>
-        {savingsAccounts.map(acc => (
-          <AccountItem key={acc.id} account={acc} dispatch={dispatch} />
-        ))}
-        <div className="total-savings-row">
-          <span>Total Erspartes</span>
-          <strong>{fmt(totalSavings)}</strong>
+        <div className="accounts-list">
+          {savingsAccounts.map((acc, idx) => (
+            <AccountItem
+              key={acc.id}
+              account={acc}
+              dispatch={dispatch}
+              accountIndex={idx + 1}
+            />
+          ))}
         </div>
+
+        {/* Total prominently shown */}
+        <div className="total-savings-box">
+          <div className="total-savings-label">Total Erspartes</div>
+          <div className="total-savings-amount">{fmt(totalSavings)}</div>
+          <div className="total-savings-sub">
+            über {savingsAccounts.length} Sparkonto{savingsAccounts.length !== 1 ? 'en' : ''}
+          </div>
+        </div>
+
         <button
           className="btn btn--outline btn--full"
           style={{ marginTop: 12 }}
@@ -74,11 +87,12 @@ export default function SavingsView() {
   );
 }
 
-function AccountItem({ account, dispatch }) {
+function AccountItem({ account, dispatch, accountIndex }) {
   const [editName, setEditName] = useState(false);
   const [editBalance, setEditBalance] = useState(false);
   const [nameVal, setNameVal] = useState(account.name);
   const [balVal, setBalVal] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   function saveName() {
     if (nameVal.trim()) dispatch({ type: 'UPDATE_SAVINGS_ACCOUNT', id: account.id, updates: { name: nameVal.trim() } });
@@ -91,47 +105,74 @@ function AccountItem({ account, dispatch }) {
     setEditBalance(false);
   }
 
+  const accountColors = ['#2E86AB', '#27AE60', '#8E44AD', '#E67E22'];
+  const color = accountColors[(accountIndex - 1) % accountColors.length];
+
   return (
-    <div className="account-row">
-      <div className="account-left">
-        <span className="account-icon">💰</span>
-        {editName ? (
-          <div className="inline-edit">
-            <input
-              className="inline-input"
-              value={nameVal}
-              onChange={e => setNameVal(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && saveName()}
-              autoFocus
-            />
-            <button className="btn btn--xs btn--primary" onClick={saveName}>OK</button>
-          </div>
-        ) : (
-          <span className="account-name" onDoubleClick={() => setEditName(true)}>
-            {account.name} <span className="edit-hint">✏️</span>
-          </span>
-        )}
+    <div className="account-card" style={{ borderLeftColor: color }}>
+      <div className="account-card-header">
+        <div className="account-card-icon" style={{ background: color + '22', color }}>
+          💰
+        </div>
+        <div className="account-card-info">
+          {editName ? (
+            <div className="inline-edit">
+              <input
+                className="inline-input"
+                value={nameVal}
+                onChange={e => setNameVal(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && saveName()}
+                autoFocus
+              />
+              <button className="btn btn--xs btn--primary" onClick={saveName}>OK</button>
+              <button className="btn btn--xs btn--ghost" onClick={() => { setNameVal(account.name); setEditName(false); }}>×</button>
+            </div>
+          ) : (
+            <div className="account-card-name" onDoubleClick={() => setEditName(true)}>
+              {account.name} <span className="edit-hint">✏️</span>
+            </div>
+          )}
+          <div className="account-card-label">Sparkonto {accountIndex}</div>
+        </div>
+        <div className="account-card-balance-wrap">
+          {editBalance ? (
+            <div className="inline-edit">
+              <input
+                className="inline-input inline-input--sm"
+                value={balVal}
+                onChange={e => setBalVal(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && saveBalance()}
+                autoFocus
+                type="number"
+                inputMode="decimal"
+              />
+              <button className="btn btn--xs btn--primary" onClick={saveBalance}>OK</button>
+              <button className="btn btn--xs btn--ghost" onClick={() => setEditBalance(false)}>×</button>
+            </div>
+          ) : (
+            <div
+              className="account-card-balance"
+              style={{ color }}
+              onClick={() => { setBalVal(account.balance.toString()); setEditBalance(true); }}
+            >
+              {fmt(account.balance)}
+              <span className="edit-hint"> ✏️</span>
+            </div>
+          )}
+        </div>
       </div>
-      {editBalance ? (
-        <div className="inline-edit">
-          <input
-            className="inline-input inline-input--sm"
-            value={balVal}
-            onChange={e => setBalVal(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && saveBalance()}
-            autoFocus
-            type="number"
-          />
-          <button className="btn btn--xs btn--primary" onClick={saveBalance}>OK</button>
-          <button className="btn btn--xs btn--ghost" onClick={() => setEditBalance(false)}>×</button>
+      {confirmDelete ? (
+        <div className="account-delete-confirm">
+          <span style={{ fontSize: 13, color: '#E74C3C' }}>Konto löschen?</span>
+          <div className="btn-row btn-row--sm">
+            <button className="btn btn--xs btn--danger" onClick={() => dispatch({ type: 'REMOVE_SAVINGS_ACCOUNT', id: account.id })}>
+              Löschen
+            </button>
+            <button className="btn btn--xs btn--ghost" onClick={() => setConfirmDelete(false)}>Abbrechen</button>
+          </div>
         </div>
       ) : (
-        <span
-          className="account-balance"
-          onClick={() => { setBalVal(account.balance.toString()); setEditBalance(true); }}
-        >
-          {fmt(account.balance)} ✏️
-        </span>
+        <button className="account-delete-btn" onClick={() => setConfirmDelete(true)}>× Konto entfernen</button>
       )}
     </div>
   );
@@ -197,6 +238,7 @@ function GoalItem({ goal, currentSavings, monthlySavings, dispatch, color }) {
                 onKeyDown={e => e.key === 'Enter' && saveTarget()}
                 autoFocus
                 type="number"
+                inputMode="decimal"
               />
               <button className="btn btn--xs btn--primary" onClick={e => { e.stopPropagation(); saveTarget(); }}>OK</button>
             </div>
@@ -261,32 +303,34 @@ function SavingsScenarios({ savingsGoals, currentSavings }) {
   const rates = [300, 500, 600, 800];
 
   return (
-    <div className="scenarios">
-      <div className="scenarios-header">
-        <div className="scenarios-col scenarios-col--label">Ziel</div>
-        {rates.map(r => (
-          <div key={r} className="scenarios-col">{fmt(r)}/Mt.</div>
-        ))}
-      </div>
-      {savingsGoals.map(goal => {
-        const remaining = Math.max(0, goal.targetAmount - currentSavings);
-        return (
-          <div key={goal.id} className="scenarios-row">
-            <div className="scenarios-col scenarios-col--label">
-              <div className="goal-dot" style={{ background: goal.color }} />
-              {goal.name}
+    <div className="scenarios-wrap">
+      <div className="scenarios">
+        <div className="scenarios-header">
+          <div className="scenarios-col scenarios-col--label">Ziel</div>
+          {rates.map(r => (
+            <div key={r} className="scenarios-col">{r} CHF</div>
+          ))}
+        </div>
+        {savingsGoals.map(goal => {
+          const remaining = Math.max(0, goal.targetAmount - currentSavings);
+          return (
+            <div key={goal.id} className="scenarios-row">
+              <div className="scenarios-col scenarios-col--label">
+                <div className="goal-dot" style={{ background: goal.color }} />
+                {goal.name}
+              </div>
+              {rates.map(r => {
+                const months = r > 0 ? Math.ceil(remaining / r) : '∞';
+                return (
+                  <div key={r} className="scenarios-col scenarios-col--months">
+                    {remaining <= 0 ? <span style={{ color: '#27AE60' }}>✅</span> : `${months} Mt.`}
+                  </div>
+                );
+              })}
             </div>
-            {rates.map(r => {
-              const months = r > 0 ? Math.ceil(remaining / r) : '∞';
-              return (
-                <div key={r} className="scenarios-col scenarios-col--months">
-                  {remaining <= 0 ? <span style={{ color: '#27AE60' }}>✅</span> : `${months} Mt.`}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

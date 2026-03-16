@@ -716,10 +716,195 @@ html, body {
 }
 .btn-row--sm { margin-top: 4px; }
 
+/* ===== FREE AVAILABLE HERO CARD ===== */
+.card--free-available {
+  background: linear-gradient(135deg, #1D8348 0%, #27AE60 100%);
+  color: #fff;
+  border: none;
+}
+.card--free-available--negative {
+  background: linear-gradient(135deg, #922B21 0%, #E74C3C 100%);
+}
+.free-available-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 4px;
+}
+.free-available-amount {
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+.free-available-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.4;
+}
+
+/* ===== TAX BLOCKED CARD ===== */
+.card--tax-blocked {
+  border-left: 4px solid #E67E22;
+  background: #FFF8F0;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  border-top: 1px solid #FDEBD0;
+  border-right: 1px solid #FDEBD0;
+  border-bottom: 1px solid #FDEBD0;
+}
+.tax-blocked-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.tax-blocked-icon { font-size: 22px; flex-shrink: 0; }
+.tax-blocked-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #935116;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.tax-blocked-sub { font-size: 12px; color: #A04000; margin-top: 2px; }
+.tax-blocked-amount {
+  font-size: 18px;
+  font-weight: 800;
+  color: #E67E22;
+  margin-bottom: 8px;
+}
+.tax-blocked-note {
+  font-size: 12px;
+  color: #7D6608;
+  background: #FEF9E7;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #F9E79F;
+}
+
+/* ===== ALLOCATION HIGHLIGHT ===== */
+.allocation-rest--highlight {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ===== TAX SPECIAL LABEL ===== */
+.cat-special--tax {
+  color: #E67E22;
+  font-weight: 600;
+}
+
+/* ===== SAVINGS ACCOUNT CARDS ===== */
+.accounts-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+
+.account-card {
+  border-left: 4px solid #2E86AB;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.account-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.account-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.account-card-info { flex: 1; min-width: 0; }
+.account-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+}
+.account-card-label { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.account-card-balance-wrap { flex-shrink: 0; }
+.account-card-balance {
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: -0.5px;
+}
+.account-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 11px;
+  cursor: pointer;
+  margin-top: 8px;
+  padding: 0;
+  font-family: inherit;
+}
+.account-delete-btn:hover { color: var(--red); }
+.account-delete-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+/* ===== SAVINGS TOTAL BOX ===== */
+.total-savings-box {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-top: 12px;
+  text-align: center;
+}
+.total-savings-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 4px;
+}
+.total-savings-amount {
+  font-size: 28px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -1px;
+}
+.total-savings-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  margin-top: 2px;
+}
+
+/* ===== SCENARIOS SCROLL WRAPPER ===== */
+.scenarios-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scenarios { min-width: 340px; }
+
+/* ===== MOBILE TOUCH IMPROVEMENTS ===== */
+.btn { min-height: 36px; }
+.btn--full { min-height: 44px; }
+.nav-btn { min-height: 44px; }
+.toggle-btn { min-height: 44px; width: 44px; }
+.input { min-height: 44px; font-size: 16px; /* prevents iOS zoom */ }
+.textarea { font-size: 16px; }
+
 /* ===== DESKTOP ===== */
 @media (min-width: 480px) {
   .app { box-shadow: 0 0 40px rgba(0,0,0,0.1); min-height: 100vh; }
   body { background: #DDE3EC; }
+  .free-available-amount { font-size: 42px; }
 }
 
 /* ===== SCROLLBAR ===== */

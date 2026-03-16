@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBudget } from '../context/BudgetContext';
 
 function fmt(val) {
@@ -27,6 +27,14 @@ function TransportCalculator({ settings, dispatch }) {
   const [mode, setMode] = useState(settings.mode);
   const [daysPerWeek, setDaysPerWeek] = useState(settings.daysPerWeek.toString());
   const [daysPerMonth, setDaysPerMonth] = useState(settings.daysPerMonth.toString());
+
+  // Sync local state when settings change from outside (e.g. after reset)
+  useEffect(() => {
+    setCostPerDay(settings.costPerDay.toString());
+    setMode(settings.mode);
+    setDaysPerWeek(settings.daysPerWeek.toString());
+    setDaysPerMonth(settings.daysPerMonth.toString());
+  }, [settings.costPerDay, settings.mode, settings.daysPerWeek, settings.daysPerMonth]);
 
   const cpd = parseFloat(costPerDay) || 0;
   const dpw = parseFloat(daysPerWeek) || 0;
@@ -62,6 +70,7 @@ function TransportCalculator({ settings, dispatch }) {
           value={costPerDay}
           onChange={e => setCostPerDay(e.target.value)}
           step="0.5"
+          inputMode="decimal"
         />
         <div className="form-hint">Mit Halbtax: ca. 24 CHF/Tag (Biel–Olten Hin&Rück)</div>
       </div>
@@ -101,9 +110,10 @@ function TransportCalculator({ settings, dispatch }) {
             step="0.5"
             min="0"
             max="7"
+            inputMode="decimal"
           />
           <div className="form-hint">
-            = {(dpw * 4.33).toFixed(1)} Tage/Monat
+            = {(dpw * 4.33).toFixed(1)} Tage/Monat → {fmt(monthlyTotal)}/Mt.
           </div>
         </div>
       ) : (
@@ -117,6 +127,7 @@ function TransportCalculator({ settings, dispatch }) {
             step="1"
             min="0"
             max="31"
+            inputMode="numeric"
           />
         </div>
       )}
@@ -140,6 +151,11 @@ function TaxReserve({ state, dispatch }) {
   const [amountVal, setAmountVal] = useState('');
   const [editNote, setEditNote] = useState(false);
   const [noteVal, setNoteVal] = useState(taxCat?.note || '');
+
+  // Sync note when taxCat changes (e.g. after reset)
+  useEffect(() => {
+    setNoteVal(taxCat?.note || '');
+  }, [taxCat?.note]);
 
   if (!taxCat) return null;
 
@@ -178,6 +194,7 @@ function TaxReserve({ state, dispatch }) {
                 onKeyDown={e => e.key === 'Enter' && saveAmount()}
                 autoFocus
                 type="number"
+                inputMode="decimal"
               />
               <button className="btn btn--xs btn--primary" onClick={saveAmount}>OK</button>
               <button className="btn btn--xs btn--ghost" onClick={() => setEditAmount(false)}>×</button>

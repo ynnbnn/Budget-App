@@ -8,14 +8,14 @@ function fmt(val) {
 }
 
 export default function Dashboard({ setActiveTab }) {
-  const { state, dispatch, totalExpenses, available, totalSavings, warnings, budgetStatus } = useBudget();
+  const { state, dispatch, totalExpenses, available, freeAvailable, totalSavings, warnings, budgetStatus } = useBudget();
   const [editingIncome, setEditingIncome] = useState(false);
   const [incomeInput, setIncomeInput] = useState('');
 
   const { savingsAllocation } = state;
-  const afterSavings = available - savingsAllocation.savings - savingsAllocation.buffer;
   const emergencyGoal = state.savingsGoals.find(g => g.id === 'goal1');
   const emergencyTarget = emergencyGoal ? emergencyGoal.targetAmount : 3000;
+  const taxCat = state.categories.find(c => c.id === 'taxes');
 
   function saveIncome() {
     const v = parseFloat(incomeInput.replace(',', '.'));
@@ -54,6 +54,7 @@ export default function Dashboard({ setActiveTab }) {
               autoFocus
               type="number"
               step="0.01"
+              inputMode="decimal"
             />
             <button className="btn btn--sm btn--primary" onClick={saveIncome}>OK</button>
             <button className="btn btn--sm btn--ghost" onClick={() => setEditingIncome(false)}>×</button>
@@ -67,21 +68,49 @@ export default function Dashboard({ setActiveTab }) {
         <div className="card-sub">Kein separater 13. Monatslohn</div>
       </div>
 
+      {/* HERO: Frei verfügbar */}
+      <div className={`card card--free-available ${freeAvailable < 0 ? 'card--free-available--negative' : ''}`}>
+        <div className="free-available-label">Frei verfügbar</div>
+        <div className="free-available-amount">{fmt(freeAvailable)}</div>
+        <div className="free-available-sub">
+          nach Ausgaben ({fmt(totalExpenses)}), Sparen ({fmt(savingsAllocation.savings)}) &amp; Puffer ({fmt(savingsAllocation.buffer)})
+        </div>
+      </div>
+
       {/* Summary row */}
       <div className="summary-grid">
         <div className="summary-card summary-card--expense">
-          <div className="summary-label">Ausgaben</div>
+          <div className="summary-label">Ausgaben total</div>
           <div className="summary-amount">{fmt(totalExpenses)}</div>
         </div>
-        <div className={`summary-card summary-card--available ${budgetStatus === 'red' ? 'summary-card--danger' : ''}`}>
-          <div className="summary-label">Verfügbar</div>
+        <div className="summary-card summary-card--available">
+          <div className="summary-label">Vor Sparen verfügbar</div>
           <div className="summary-amount">{fmt(available)}</div>
         </div>
       </div>
 
+      {/* Tax reserve — visually blocked */}
+      {taxCat && taxCat.active && (
+        <div className="card card--tax-blocked">
+          <div className="tax-blocked-header">
+            <span className="tax-blocked-icon">🔒</span>
+            <div>
+              <div className="tax-blocked-title">Steuerrückstellung — GEBLOCKT</div>
+              <div className="tax-blocked-sub">Kanton Bern, Gemeinde Ligerz — nicht einplanen!</div>
+            </div>
+          </div>
+          <div className="tax-blocked-amount">
+            {fmt(taxCat.amount)}/Mt. · {fmt(taxCat.amount * 12)}/Jahr
+          </div>
+          <div className="tax-blocked-note">
+            ⚠️ Dieses Geld gehört dem Staat — es ist <strong>nicht frei verfügbar</strong>.
+          </div>
+        </div>
+      )}
+
       {/* Allocation */}
       <div className="card">
-        <div className="card-title">Empfohlene Aufteilung</div>
+        <div className="card-title">Aufteilung des Verfügbaren</div>
         <AllocationRow
           label="Sparen / Notfallfonds"
           icon="🏦"
@@ -98,10 +127,10 @@ export default function Dashboard({ setActiveTab }) {
           field="buffer"
           dispatch={dispatch}
         />
-        <div className="allocation-rest">
-          <span>Verbleibend</span>
-          <strong style={{ color: afterSavings < 0 ? '#E74C3C' : '#555' }}>
-            {fmt(afterSavings)}
+        <div className="allocation-rest allocation-rest--highlight">
+          <span>🟢 Frei verfügbar</span>
+          <strong style={{ color: freeAvailable < 0 ? '#E74C3C' : '#27AE60' }}>
+            {fmt(freeAvailable)}
           </strong>
         </div>
       </div>
@@ -132,17 +161,6 @@ export default function Dashboard({ setActiveTab }) {
           Aktuelles Erspartes: {fmt(totalSavings)} / Ziel: {fmt(emergencyTarget)}
         </div>
       </div>
-
-      {/* Tax reserve note */}
-      <div className="card card--tax">
-        <div className="card-label">Steuerrückstellung (mental geblockt)</div>
-        <div className="card-amount card-amount--sm">
-          {fmt(state.categories.find(c => c.id === 'taxes')?.amount || 0)} / Monat
-        </div>
-        <div className="card-sub">
-          Kanton Bern, Gemeinde Ligerz — dieses Geld nicht einplanen!
-        </div>
-      </div>
     </div>
   );
 }
@@ -170,6 +188,7 @@ function AllocationRow({ label, icon, value, color, field, dispatch }) {
             onKeyDown={e => e.key === 'Enter' && save()}
             autoFocus
             type="number"
+            inputMode="decimal"
           />
           <button className="btn btn--xs btn--primary" onClick={save}>OK</button>
           <button className="btn btn--xs btn--ghost" onClick={() => setEditing(false)}>×</button>
@@ -199,6 +218,7 @@ function CategoryRow({ cat, income }) {
       <div className="cat-info">
         <span className="cat-name">{cat.name}</span>
         {cat.specialLabel && <span className="cat-special">{cat.specialLabel}</span>}
+        {cat.isTax && <span className="cat-special cat-special--tax">🔒 Mental geblockt</span>}
       </div>
       <div className="cat-right">
         <span className="cat-amount">

@@ -1,14 +1,28 @@
-import { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer } from 'react';
 import { INITIAL_DATA } from '../data/initialData';
 
 const BudgetContext = createContext(null);
 
 const STORAGE_KEY = 'budget_app_data';
 
+function mergeWithInitial(stored) {
+  if (!stored) return INITIAL_DATA;
+  // Ensure all top-level keys exist (schema migration)
+  return {
+    income: stored.income ?? INITIAL_DATA.income,
+    categories: stored.categories ?? INITIAL_DATA.categories,
+    savingsAllocation: stored.savingsAllocation ?? INITIAL_DATA.savingsAllocation,
+    transportSettings: stored.transportSettings ?? INITIAL_DATA.transportSettings,
+    savingsAccounts: stored.savingsAccounts ?? INITIAL_DATA.savingsAccounts,
+    savingsGoals: stored.savingsGoals ?? INITIAL_DATA.savingsGoals,
+    currentMonth: stored.currentMonth ?? INITIAL_DATA.currentMonth,
+  };
+}
+
 function loadFromStorage() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) return mergeWithInitial(JSON.parse(raw));
   } catch {}
   return null;
 }
@@ -63,9 +77,8 @@ function budgetReducer(state, action) {
       };
       break;
 
-    case 'UPDATE_TRANSPORT':
+    case 'UPDATE_TRANSPORT': {
       next = { ...state, transportSettings: { ...state.transportSettings, ...action.updates } };
-      // Recalculate transport category amount
       const ts = next.transportSettings;
       const monthlyDays =
         ts.mode === 'week' ? ts.daysPerWeek * 4.33 : ts.daysPerMonth;
@@ -77,6 +90,7 @@ function budgetReducer(state, action) {
         ),
       };
       break;
+    }
 
     case 'UPDATE_SAVINGS_ALLOCATION':
       next = { ...state, savingsAllocation: { ...state.savingsAllocation, ...action.updates } };
@@ -98,6 +112,13 @@ function budgetReducer(state, action) {
           ...state.savingsAccounts,
           { id: 'account_' + Date.now(), name: 'Neues Sparkonto', balance: 0, note: '' },
         ],
+      };
+      break;
+
+    case 'REMOVE_SAVINGS_ACCOUNT':
+      next = {
+        ...state,
+        savingsAccounts: state.savingsAccounts.filter(a => a.id !== action.id),
       };
       break;
 
@@ -131,7 +152,7 @@ function budgetReducer(state, action) {
       break;
 
     case 'RESET':
-      next = INITIAL_DATA;
+      next = { ...INITIAL_DATA };
       break;
 
     default:
@@ -153,6 +174,7 @@ export function BudgetProvider({ children }) {
   const activeCategories = state.categories.filter(c => c.active);
   const totalExpenses = activeCategories.reduce((sum, c) => sum + (c.amount || 0), 0);
   const available = state.income - totalExpenses;
+  const freeAvailable = available - state.savingsAllocation.savings - state.savingsAllocation.buffer;
   const totalSavings = state.savingsAccounts.reduce((sum, a) => sum + (a.balance || 0), 0);
 
   const taxCategory = state.categories.find(c => c.id === 'taxes');
@@ -162,6 +184,9 @@ export function BudgetProvider({ children }) {
   const warnings = [];
   if (available < 0) {
     warnings.push({ level: 'danger', msg: 'Ausgaben übersteigen dein Einkommen!' });
+  }
+  if (freeAvailable < 0 && available >= 0) {
+    warnings.push({ level: 'danger', msg: 'Spar- und Pufferbeträge übersteigen das Verfügbare!' });
   }
   if (state.savingsAllocation.savings < 300 && state.savingsAllocation.savings > 0) {
     warnings.push({ level: 'warning', msg: 'Sparbetrag unter 300 CHF – Ziele schwer erreichbar.' });
@@ -177,13 +202,18 @@ export function BudgetProvider({ children }) {
     warnings.push({ level: 'info', msg: 'Abo-Kosten über dem üblichen Rahmen (> 130 CHF).' });
   }
 
-  // Budget status
+  // Budget status based on freeAvailable
   let budgetStatus = 'green';
-  if (available < 800) budgetStatus = 'yellow';
-  if (available < 400 || available < 0) budgetStatus = 'red';
+  if (freeAvailable < 200) budgetStatus = 'yellow';
+  if (freeAvailable < 0 || available < 0) budgetStatus = 'red';
 
   return (
-    <BudgetContext.Provider value={{ state, dispatch, totalExpenses, available, totalSavings, taxAmount, warnings, budgetStatus }}>
+    <BudgetContext.Provider value={{
+      state, dispatch,
+      totalExpenses, available, freeAvailable,
+      totalSavings, taxAmount,
+      warnings, budgetStatus,
+    }}>
       {children}
     </BudgetContext.Provider>
   );
