@@ -11,6 +11,11 @@ async function hashPassword(password) {
 }
 
 export function isAuthenticated() {
+  // Session is only valid if a password has actually been set
+  if (!localStorage.getItem(PASS_KEY)) {
+    sessionStorage.removeItem(SESSION_KEY);
+    return false;
+  }
   return !!sessionStorage.getItem(SESSION_KEY);
 }
 
